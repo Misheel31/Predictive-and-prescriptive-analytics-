@@ -78,30 +78,43 @@ st.set_page_config(layout="wide")
 st.title("Myntra Product Catalog - Exploratory Data Analysis")
 
 # Load dataset
-df = pd.read_csv("myntra_products_catalog.csv")
-
+df = pd.read_csv("csv_files/myntra_products_catalogs.csv")
+df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 # Clean and normalize column names
 df.columns = df.columns.str.strip().str.lower()
-df.rename(columns={"price (inr)": "price_inr"}, inplace=True)
+df.rename(columns={
+    "price (inr)": "price_inr",
+    "date purchase": "purchase_date",
+    "review rating": "review_rating",
+    "payment method": "payment_method",
+
+}, inplace=True)
+
+df["purchase_date"] = pd.to_datetime(df["purchase_date"], errors='coerce')
+df["review_rating"] = df["review_rating"].fillna(0)
 
 # Sidebar filters
 st.sidebar.header("Filter Options")
 
 gender_options = df["gender"].dropna().unique()
 brand_options = df["productbrand"].dropna().unique()
+payment_options = df["payment_method"].dropna().unique()
+rating_filter = st.sidebar.slider("Minimum Review Rating", 0, 5, 0)
+payment_filter = st.sidebar.multiselect("Payment Methods", options=payment_options, default=payment_options)
 
 gender_filter = st.sidebar.multiselect("Gender", options=gender_options, default=gender_options)
 brand_filter = st.sidebar.multiselect("Product Brand", options=brand_options, default=brand_options)
-st.write(df.columns.tolist())
+
 
 # Filtered DataFrame
 filtered_df = df[
     (df["gender"].isin(gender_filter)) &
-    (df["productbrand"].isin(brand_filter))
+    (df["productbrand"].isin(brand_filter)) &
+    (df["payment_method"].isin(payment_filter)) &
+    (df["review_rating"] >= rating_filter)
 ]
 
-st.subheader("Filtered Data Overview")
-st.write(filtered_df.head())
+filtered_df["review_rating_int"] = filtered_df["review_rating"].round().astype(int)
 
 # ---------- Plot 1: Price Distribution ----------
 st.subheader("Price Distribution")
@@ -131,3 +144,47 @@ fig4, ax4 = plt.subplots(figsize=(8, 6))
 sns.heatmap(numeric_cols.corr(), annot=True, cmap="coolwarm", ax=ax4)
 st.pyplot(fig4)
 
+# ---------- Plot 5: Average Price by Product Brand (Line Plot) ----------
+st.subheader("Average Price per Brand")
+
+# Calculate average price for each brand
+avg_price_by_brand = (
+    filtered_df.groupby("productbrand")["price_inr"]
+    .mean()
+    .reset_index()
+    .sort_values("price_inr", ascending=False)
+)
+
+# Limit to top 20 brands
+avg_price_by_brand = avg_price_by_brand.head(20)
+
+# Line plot
+fig5, ax5 = plt.subplots(figsize=(12, 6))
+sns.lineplot(data=avg_price_by_brand, x="productbrand", y="price_inr", marker="o", ax=ax5)
+
+ax5.set_xticks(range(len(avg_price_by_brand)))
+ax5.set_xticklabels(avg_price_by_brand["productbrand"], rotation=45, ha="right")
+
+ax5.set_xlabel("Product Brand")
+ax5.set_ylabel("Average Price (INR)")
+ax5.set_title("Average Price by Brand")
+st.pyplot(fig5)
+
+# --- Plot 6: Sales Over Time (Line Plot) ---
+st.subheader("Total Sales Over Time")
+# Aggregate by date (sum of prices per day)
+sales_by_date = filtered_df.groupby("purchase_date")["price_inr"].sum().reset_index()
+sales_by_date = sales_by_date.sort_values("purchase_date")
+
+fig6, ax6 = plt.subplots(figsize=(10, 5))
+sns.lineplot(data=sales_by_date, x="purchase_date", y="price_inr", ax=ax6)
+ax6.set_title("Total Daily Sales (INR)")
+ax6.set_xlabel("Date")
+ax6.set_ylabel("Total Sales (INR)")
+st.pyplot(fig6)
+
+
+st.subheader("Review Rating Distribution")
+fig7, ax7 = plt.subplots(figsize=(6, 4))
+sns.countplot(data=filtered_df, x="review_rating", ax=ax7)
+st.pyplot(fig7)

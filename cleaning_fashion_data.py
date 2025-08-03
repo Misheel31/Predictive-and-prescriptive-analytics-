@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('synthetic_online_retail_data.csv')
+df = pd.read_csv('csv_files/synthetic_online_retail_data.csv')
 
 fashion_df = df[df['category_name']== 'Fashion'].copy()
 

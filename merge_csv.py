@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Load data
-retail_df = pd.read_csv("synthetic_online_retail_data.csv")
-category_df = pd.read_csv("fashion_category_data.csv")
+retail_df = pd.read_csv("csv_files/synthetic_online_retail_data.csv")
+category_df = pd.read_csv("csv_files/fashion_category_data.csv")
 
 # Clean types
 retail_df['product_id'] = retail_df['product_id'].astype(str).str.strip()

@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv("combined_order_category_data.csv")
+df = pd.read_csv("csv_files/combined_order_category_data.csv")
 
 # Summary of missing values
 print(df.isna().sum())

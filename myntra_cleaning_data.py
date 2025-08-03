@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Load the CSV
-df = pd.read_csv('myntra_products_catalog.csv')
+df = pd.read_csv('csv_files/myntra_products_catalog.csv')
 
 df['category_name'] = 'Fashion'
 fashion_df = df.copy()
